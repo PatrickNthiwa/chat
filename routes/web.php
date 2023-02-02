@@ -15,6 +15,6 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', 'HomeController@index');
 
-Auth::routes();
+Route::get('/load-latest-messages', '\App\Http\Controllers\MessagesController@getLoadLatestMessages');
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+Auth::routes();
