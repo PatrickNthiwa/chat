@@ -14,7 +14,47 @@ class MessagesController extends Controller
     {
         $this->middleware('auth');
     }
+    /**
+     * getOldMessages
+     *
+     * we will fetch the old messages using the last sent id from the request
+     * by querying the created at date
+     *
+     * @param Request $request
+     */
+    public function getOldMessages(Request $request)
+    {
+        if(!$request->old_message_id || !$request->to_user)
+            return;
 
+        $message = Message::find($request->old_message_id);
+
+        $lastMessages = Message::where(function($query) use ($request, $message) {
+            $query->where('from_user', Auth::user()->id)
+                ->where('to_user', $request->to_user)
+                ->where('created_at', '<', $message->created_at);
+        })
+            ->orWhere(function ($query) use ($request, $message) {
+                $query->where('from_user', $request->to_user)
+                    ->where('to_user', Auth::user()->id)
+                    ->where('created_at', '<', $message->created_at);
+            })
+            ->orderBy('created_at', 'ASC')->limit(10)->get();
+
+        $return = [];
+
+        if($lastMessages->count() > 0) {
+
+            foreach ($lastMessages as $message) {
+
+                $return[] = view('message-line')->with('message', $message)->render();
+            }
+
+            PusherFactory::make()->trigger('chat', 'oldMsgs', ['to_user' => $request->to_user, 'data' => $return]);
+        }
+
+        return response()->json(['state' => 1, 'data' => $return]);
+    }
     /**
      * postSendMessage
      *
