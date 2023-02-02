@@ -15,7 +15,45 @@ class MessagesController extends Controller
         $this->middleware('auth');
     }
 
+    /**
+     * postSendMessage
+     *
+     * @param Request $request
+     */
+    public function postSendMessage(Request $request)
+    {
+        if(!$request->to_user || !$request->message) {
+            return;
+        }
 
+        $message = new Message();
+
+        $message->from_user = Auth::user()->id;
+
+        $message->to_user = $request->to_user;
+
+        $message->content = $request->message;
+
+        $message->save();
+
+
+        // prepare some data to send with the response
+        $message->dateTimeStr = date("Y-m-dTH:i", strtotime($message->created_at->toDateTimeString()));
+
+        $message->dateHumanReadable = $message->created_at->diffForHumans();
+
+        $message->fromUserName = $message->fromUser->name;
+
+        $message->from_user_id = Auth::user()->id;
+
+        $message->toUserName = $message->toUser->name;
+
+        $message->to_user_id = $request->to_user;
+
+        PusherFactory::make()->trigger('chat', 'send', ['data' => $message]);
+
+        return response()->json(['state' => 1, 'data' => $message]);
+    }
     /**
      * getLoadLatestMessages
      *

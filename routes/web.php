@@ -17,4 +17,5 @@ Route::get('/', 'HomeController@index');
 
 Route::get('/load-latest-messages', '\App\Http\Controllers\MessagesController@getLoadLatestMessages');
 
+Route::post('/send', '\App\Http\Controllers\MessagesController@postSendMessage');
 Auth::routes();
